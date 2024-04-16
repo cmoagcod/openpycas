@@ -83,10 +83,10 @@ class Puissance:
         return resultat
 
 
-def ajouter(param: list[Fraction]) -> Fraction:
+def ajouter(params: list[Fraction]) -> Fraction:
     debug_print("Début du traitement d'une addition")
     resultat: Fraction = Fraction(0)
-    for i in param:
+    for i in params:
         resultat = Fraction((resultat.dividende * i.diviseur) + (i.dividende * resultat.diviseur),
                             resultat.diviseur * i.diviseur)
         debug_print("Ajouter: Le résultat est désormais", resultat.get())
@@ -94,10 +94,10 @@ def ajouter(param: list[Fraction]) -> Fraction:
     return resultat
 
 
-def multiplier(param: list[Fraction]) -> Fraction:
+def multiplier(params: list[Fraction]) -> Fraction:
     debug_print("Début du traitement d'une multiplication")
     resultat = Fraction(1)
-    for i in param:
+    for i in params:
         if resultat.get() == Fraction(0).get() or i.get() == Fraction(0).get():
             debug_print("Multiplier: Multiplication par 0: le resultat est défini à 0")
             return Fraction(0)
@@ -107,18 +107,29 @@ def multiplier(param: list[Fraction]) -> Fraction:
     return resultat
 
 
-def exponent(param: list[Fraction] = [Fraction(0)]) -> Puissance:
+def exponent(params: list[Fraction]) -> object:
     debug_print("Début du traitement d'une puissance")
     execute: bool = False
-    fraction_originale = Fraction(param[0].dividende, param[0].diviseur)
+    fraction_originale = Fraction(params[0].dividende, params[0].diviseur)
     liste_exposants: list[Fraction] = []
-    for i in param:
+    for i in params:
         if execute:
             liste_exposants.append(i)
         execute = True
     local_exponent = multiplier(liste_exposants)
     if local_exponent.diviseur == 1:
         resultat = Fraction(fraction_originale.dividende ** local_exponent.dividende, fraction_originale.diviseur ** local_exponent.dividende)
+    else:
+        racine = Fraction(1, local_exponent.diviseur)
+        puissance = Fraction(local_exponent.dividende)
+        partie_entiere: Fraction = exponent([fraction_originale, puissance])
+        if partie_entiere.dividende == 1 and partie_entiere.diviseur == 1:
+            local_exponent = Fraction(1)
+            racine = Fraction(1)
+        if partie_entiere.evaluate(1) < 10 ** 10:
+            resultat = Puissance([partie_entiere, racine])
+        else:
+            resultat = Puissance([fraction_originale, local_exponent])
     debug_print("Fin du traitement de la puissance\n")
     return resultat
 
@@ -130,5 +141,10 @@ def conversion_fraction(nombre: float) -> Fraction:
 
 if __name__ == '__main__':
 
-    debug_print(exponent([Fraction(6, 2), Fraction(2)]).get())
+    test_exponent = exponent([Fraction(24, 20), Fraction(2)])
+    if isinstance(test_exponent, Fraction):
+        debug_print(test_exponent.get())
+        debug_print(test_exponent.evaluate(5))
+    else:
+        debug_print(test_exponent.params[0].get(), test_exponent.params[1].get())
     print('Programme terminé !')
