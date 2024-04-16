@@ -29,7 +29,7 @@ class Fraction:
         self.dividende = dividende
         self.diviseur = diviseur
 
-    def get(self):
+    def get(self) -> tuple:
         return self.dividende, "/", self.diviseur
 
 
@@ -40,6 +40,18 @@ class Variable:
             self.partie_litterale = []
         else:
             self.partie_litterale = variables
+
+
+class Addition:
+    def __init__(self, params: list):
+        self.params = params
+
+    def get(self):
+        resultat = []
+        for i in self.params:
+            resultat += i, "+"
+        resultat.pop(len(resultat)-1)
+        return resultat
 
 
 class Multiplication:
@@ -54,6 +66,10 @@ class Multiplication:
         return resultat
 
 
+def ajouter(param: list[Fraction]) -> Fraction:
+    debug_print("\nDébut du traitement d'une addition")
+
+
 def multiplier(param: list[Fraction]) -> Fraction:
     debug_print("\nDébut du traitement d'une multiplication")
     resultat = Fraction(1)
@@ -65,6 +81,11 @@ def multiplier(param: list[Fraction]) -> Fraction:
         debug_print("Multiplier: Le résultat est désormais", resultat.get())
     debug_print("Fin du traitement de la multiplication")
     return resultat
+
+
+def conversion_fraction(nombre: float) -> Fraction:
+    nombre_decimaux = len(str(nombre).split('.')[1])
+    return Fraction(int(nombre * (10 ** nombre_decimaux)), int(10 ** nombre_decimaux))
 
 
 if __name__ == '__main__':
