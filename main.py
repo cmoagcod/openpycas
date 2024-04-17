@@ -9,12 +9,37 @@ racines: dict = {1: 1, 4: 2, 9: 3, 16: 4, 25: 5, 36: 6, 49: 7, 64: 8, 81: 9, 100
                  5776: 76, 5929: 77, 6084: 78, 6241: 79, 6400: 80, 6561: 81, 6724: 82, 6889: 83, 7056: 84, 7225: 85,
                  7396: 86, 7569: 87, 7744: 88, 7921: 89, 8100: 90, 8281: 91, 8464: 92, 8649: 93, 8836: 94, 9025: 95,
                  9216: 96, 9409: 97, 9604: 98, 9801: 99, 10000: 100}
+operations = ("^", "/", "*", "-", "+")
+operations_a_traiter = ("(", ")", "^", "/", "*", "-", "+")
 debug: bool = True
 
 
 def debug_print(*args):
     if debug:
         print(*args)
+
+
+class Expression:
+    def __init__(self, string: str):
+        self.expression: dict = {}
+
+        string = developpement_initial(string)
+
+        position_curseur: int = 0
+        position_nombre: int = 0
+        for char in string:
+            self.expression[position_curseur] = ''
+            for op in operations_a_traiter:
+                if char == op:
+                    self.expression[position_curseur] = op
+                    position_nombre = position_curseur + 1
+            if char.isdigit():
+                debug_print(char)
+                self.expression[position_nombre] += str(char)
+            if self.expression[position_curseur] == '':
+                self.expression.pop(position_curseur)
+            position_curseur += 1
+
 
 
 class Fraction:
@@ -93,6 +118,87 @@ class Puissance:
         return resultat
 
 
+def ajoute_symbole_multiplier(caractere, caractere_precedent, position_curseur) -> bool:
+    ajouter_symbole_multiplier: bool = False
+    est_lettre: bool = False
+
+    if caractere.isdigit() and position_curseur - 1 >= 0:
+        if not caractere_precedent.isdigit():
+            debug_print("Le caractère à la position précédente:", position_curseur - 1, "n'est pas un nombre.")
+            ajouter_symbole_multiplier = True
+            for op in operations:
+                if caractere_precedent == op:
+                    ajouter_symbole_multiplier = False
+
+    elif caractere != ")" and caractere != "}" and caractere != "{" and caractere != "$":
+        debug_print("Le caractère à la position", position_curseur, "n'est pas un nombre.")
+        est_lettre = True
+        for op in operations:
+            if caractere == op:
+                est_lettre = False
+
+        if est_lettre:
+            ajouter_symbole_multiplier = True
+
+        if position_curseur - 1 < 0:
+            ajouter_symbole_multiplier = False
+
+        for op in operations:
+            if caractere_precedent == op:
+                ajouter_symbole_multiplier = False
+
+    if (caractere_precedent == "(" or caractere_precedent == "$" or caractere_precedent == "{"
+            or caractere_precedent == "}"):
+        ajouter_symbole_multiplier = False
+
+    return ajouter_symbole_multiplier
+
+
+def developpement_initial(expression_entree: list, position_curseur: int = 0, position_depart_expression: int = -1,
+                          nombre_parentheses: int = 0, dans_expression: bool = False, expression_finale: list = None) \
+        -> str:
+    if expression_finale is None:
+        expression_finale = []
+    for i in expression_entree:
+        if (dans_expression and position_curseur == position_depart_expression + 1 and
+                expression_entree[position_curseur] != "{"):
+            raise Exception("Une erreur est survenue", "{ manquant à la position", position_curseur)
+
+        if expression_entree[position_curseur] == "$":
+            debug_print("Début d'expression ${} à la position ", position_curseur)
+            position_depart_expression = position_curseur
+            dans_expression = True
+
+        if expression_entree[position_curseur] == "(":
+            debug_print("Début d'expression () à la position ", position_curseur)
+            nombre_parentheses = nombre_parentheses + 1
+
+        if expression_entree[position_curseur] == ")":
+            debug_print("Fin d'expression () à la position ", position_curseur)
+            nombre_parentheses = nombre_parentheses - 1
+
+        if not dans_expression:
+
+            if ajoute_symbole_multiplier(expression_entree[position_curseur], expression_entree[position_curseur - 1],
+                                         position_curseur):
+                expression_finale.append("*")
+            expression_finale.append(expression_entree[position_curseur])
+
+        if expression_entree[position_curseur] == "}" and dans_expression:
+            debug_print("Fin d'expression ${} à la position ", position_curseur)
+            dans_expression = False
+
+        position_curseur = position_curseur + 1
+
+    if dans_expression:
+        raise Exception("Une erreur est survenue", "} manquant")
+
+    if nombre_parentheses > 0:
+        raise Exception("Une erreur est survenue", ") manquant")
+
+    return expression_finale
+
+
 def ajouter(params: list[Fraction]) -> Fraction:
     debug_print("Début du traitement d'une addition")
     resultat: Fraction = Fraction(0)
@@ -146,10 +252,14 @@ def exponent(params: list[Fraction]) -> object:
 
 
 def conversion_fraction(nombre: float) -> Fraction:
+    if isinstance(nombre, int):
+        return Fraction(nombre)
     nombre_decimaux = len(str(nombre).split('.')[1])
     return Fraction(int(nombre * (10 ** nombre_decimaux)), int(10 ** nombre_decimaux))
 
 
 if __name__ == '__main__':
+    var = Expression(input("expression: "))
+    print(var.expression)
 
     print('Programme terminé !')
