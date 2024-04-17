@@ -9,8 +9,8 @@ racines: dict = {1: 1, 4: 2, 9: 3, 16: 4, 25: 5, 36: 6, 49: 7, 64: 8, 81: 9, 100
                  5776: 76, 5929: 77, 6084: 78, 6241: 79, 6400: 80, 6561: 81, 6724: 82, 6889: 83, 7056: 84, 7225: 85,
                  7396: 86, 7569: 87, 7744: 88, 7921: 89, 8100: 90, 8281: 91, 8464: 92, 8649: 93, 8836: 94, 9025: 95,
                  9216: 96, 9409: 97, 9604: 98, 9801: 99, 10000: 100}
-operations = ("^", "/", "*", "-", "+")
-operations_a_traiter = ("(", ")", "^", "/", "*", "-", "+")
+operations: tuple[str] = ("^", "/", "*", "-", "+")
+priorite_operatoire: tuple[str] = ("(", ")", "^", "/", "*", "-", "+")
 debug: bool = True
 
 
@@ -24,15 +24,27 @@ class Expression:
         self.expression: dict = {}
 
         string = developpement_initial(string)
+        sous_expressions: list[list[int]] = [[]]
 
         position_curseur: int = 0
         position_nombre: int = 0
+        nombre_parentheses: int = 0
         for char in string:
             self.expression[position_curseur] = ''
-            for op in operations_a_traiter:
+            for op in operations:
                 if char == op:
                     self.expression[position_curseur] = op
                     position_nombre = position_curseur + 1
+            if char == "(":
+                nombre_parentheses += 1
+                if not sous_expressions[0]:
+                    sous_expressions[0] = [position_curseur]
+                else:
+                    sous_expressions.append([position_curseur])
+                position_nombre = position_curseur + 1
+            if char == ")":
+                sous_expressions[nombre_parentheses-1].append(position_curseur-1)
+                position_nombre = position_curseur + 1
             if char.isdigit():
                 debug_print(char)
                 self.expression[position_nombre] += str(char)
@@ -40,6 +52,7 @@ class Expression:
                 self.expression.pop(position_curseur)
             position_curseur += 1
 
+        self.sous_expressions = sous_expressions
 
 
 class Fraction:
@@ -88,7 +101,7 @@ class Addition:
         resultat = []
         for i in self.params:
             resultat += i, "+"
-        resultat.pop(len(resultat)-1)
+        resultat.pop(len(resultat) - 1)
         return resultat
 
 
@@ -100,7 +113,7 @@ class Multiplication:
         resultat = []
         for i in self.params:
             resultat += i, "*"
-        resultat.pop(len(resultat)-1)
+        resultat.pop(len(resultat) - 1)
         resultat = tuple(resultat)
         return resultat
 
@@ -113,7 +126,7 @@ class Puissance:
         resultat = []
         for i in self.params:
             resultat += i, "^"
-        resultat.pop(len(resultat)-1)
+        resultat.pop(len(resultat) - 1)
         resultat = tuple(resultat)
         return resultat
 
@@ -261,5 +274,11 @@ def conversion_fraction(nombre: float) -> Fraction:
 if __name__ == '__main__':
     var = Expression(input("expression: "))
     print(var.expression)
+    print(var.sous_expressions)
+
+    print("---")
+
+    test = ajouter([Fraction(2), Fraction(3)])
+    print(test.get())
 
     print('Programme terminé !')
